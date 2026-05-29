@@ -5,100 +5,114 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
 using System.Windows;
-using Vibromonitor.Services;
+using VibroMonitor.Services;
 using VibroMonitor.Models;
 using VibroMonitor.Views;
+using VibroMonitor.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace VibroMonitor.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
-        public ObservableCollection<EquipmentItem> EquipmentItems { get; set; }
+        private readonly AppDbContext _db;
+        private readonly MqttService _mqttService;
 
-        public ObservableCollection<AlarmItem> AlarmItems { get; set; }
+        [ObservableProperty]
+        private ObservableCollection<EquipmentItem> equipmentItems = new();
 
-        public MainViewModel()
+        [ObservableProperty]
+        private ObservableCollection<AlarmItem> alarmItems = new();
+
+        public MainViewModel(AppDbContext db, MqttService mqttService)
         {
-            EquipmentItems = new ObservableCollection<EquipmentItem>()
+            _db = db;
+            _mqttService = mqttService;
+        }
+
+        private void OnMessageReceived(string topic, string payload)
         {
-            new()
+            // find point by topic
+            foreach (var equipment in EquipmentItems)
             {
-                Name = "Привод конвейерной ленты",
-                ImagePath = "../Images/1.jpg"
-            },
+                var point = equipment.Points.FirstOrDefault(p => p.MqttTopic == topic);
+                if (point != null)
+                {
+                    payload = payload.Replace('.', ',');
+                    if (double.TryParse(payload, out var val))
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            point.Value = val;
+                            // update in-memory history (client-side only)
+                            point.History.Add(new PointValue { Time = DateTime.Now, Value = val });
+                            while (point.History.Count > 500)
+                                point.History.RemoveAt(0);
 
-            new()
-            {
-                Name = "Привод печи",
-                ImagePath = "../Images/2.jpg"
-            },
-
-            new()
-            {
-                Name = "Двигатель основной",
-                ImagePath = "../Images/3.jpg"
-            },
-            new()
-            {
-                Name = "Привод печи",
-                ImagePath = "../Images/4.jpg"
-            },
-            new()
-            {
-                Name = "Привод печи",
-                ImagePath = "../Images/5.jpg"
-            },
-            new()
-            {
-                Name = "Привод печи",
-                ImagePath = "../Images/1.jpg"
-            },
-            new()
-            {
-                Name = "Привод печи",
-                ImagePath = "../Images/2.jpg"
-            },
-            new()
-            {
-                Name = "Привод печи",
-                ImagePath = "../Images/3.jpg"
-            },
-            new()
-            {
-                Name = "Привод печи",
-                ImagePath = "../Images/4.jpg"
-            },
-            new()
-            {
-                Name = "Привод печи",
-                ImagePath = "../Images/5.jpg"
+                            // update equipment alert
+                            var prev = equipment.CurrentAlert;
+                            equipment.UpdateAlertFromPoints();
+                            if (equipment.CurrentAlert != prev)
+                            {
+                                if (equipment.CurrentAlert == Models.AlertLevel.Alarm)
+                                {
+                                    AlarmItems.Add(new AlarmItem { Message = $"Авария в {equipment.Name}", Status = "Активно", Created = DateTime.Now.ToString(), Sensor = point.Name });
+                                }
+                            }
+                        });
+                    }
+                    break;
+                }
             }
-        };
+        }
 
-            AlarmItems = new ObservableCollection<AlarmItem>()
+        public async Task InitializeAsync()
         {
-            new()
+            // load equipment and their points from DB
+            var items = await _db.EquipmentItems.Include(x => x.Points).ToListAsync();
+            EquipmentItems.Clear();
+            foreach (var it in items)
+                EquipmentItems.Add(it);
+
+            // subscribe to MQTT for all points
+            await _mqttService.Connect();
+            foreach (var it in EquipmentItems)
+            {
+                foreach (var p in it.Points)
+                {
+                    if (!string.IsNullOrWhiteSpace(p.MqttTopic))
+                        await _mqttService.Subscribe(p.MqttTopic);
+                }
+            }
+
+            _mqttService.MessageReceived += OnMessageReceived;
+
+            // start blinking timer
+            var timer = new System.Windows.Threading.DispatcherTimer();
+            timer.Interval = TimeSpan.FromMilliseconds(600);
+            timer.Tick += (s, e) =>
+            {
+                foreach (var it in EquipmentItems)
+                {
+                    if (it.CurrentAlert != Models.AlertLevel.Normal)
+                        it.IsBlinkOn = !it.IsBlinkOn;
+                    else
+                        it.IsBlinkOn = false;
+                }
+            };
+            timer.Start();
+
+            AlarmItems.Add(new()
             {
                 Message = "Превышение виброскорости",
                 Status = "Активно",
                 Created = "27.05.2026 15:26",
                 Sensor = "Установка 1"
-            },
-            new()
-            {
-                Message = "Превышение виброскорости",
-                Status = "Квитировано",
-                Created = "27.05.2026 15:26",
-                Sensor = "Установка 1"
-            },
-            new()
-            {
-                Message = "Превышение виброскорости",
-                Status = "Активно",
-                Created = "27.05.2026 15:26",
-                Sensor = "Установка 1"
             }
-        };
+                );
+            // example static alarms (can be loaded from DB later)
+
         }
 
         [RelayCommand]
@@ -112,12 +126,17 @@ namespace VibroMonitor.ViewModels
         {
             item.Status = "Квитировано";
         }
-        MqttService _mqttService = new MqttService();
         [RelayCommand]
         private async Task OpenEquipment(EquipmentItem item)
         {
             await _mqttService.Connect();
-            var vm = new EquipmentDetailsViewModel(item, _mqttService);
+
+            // ensure points are loaded
+            var equipment = await _db.EquipmentItems.Include(x => x.Points).FirstOrDefaultAsync(x => x.Id == item.Id);
+            if (equipment == null)
+                return;
+
+            var vm = new EquipmentDetailsViewModel(equipment, _mqttService, _db);
 
             var window = new EquipmentDetailsWindow()
             {
@@ -125,6 +144,23 @@ namespace VibroMonitor.ViewModels
             };
 
             window.ShowDialog();
+        }
+
+        [RelayCommand]
+        private async Task AddEquipment()
+        {
+            var newItem = new EquipmentItem() { Name = "Новое оборудование" };
+            _db.EquipmentItems.Add(newItem);
+            await _db.SaveChangesAsync();
+            EquipmentItems.Add(newItem);
+        }
+
+        [RelayCommand]
+        private async Task RemoveEquipment(EquipmentItem item)
+        {
+            _db.EquipmentItems.Remove(item);
+            await _db.SaveChangesAsync();
+            EquipmentItems.Remove(item);
         }
     }
 }

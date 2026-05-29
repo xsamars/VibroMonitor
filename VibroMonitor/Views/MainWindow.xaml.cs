@@ -17,9 +17,12 @@ namespace VibroMonitor.Views;
 /// </summary>
 public partial class MainWindow : Window
 {
-    public MainWindow()
+    public MainWindow(MainViewModel vm)
     {
         InitializeComponent();
-        DataContext = new MainViewModel();
+        DataContext = vm;
+
+        // initialize async data loading
+        _ = vm.InitializeAsync();
     }
 }

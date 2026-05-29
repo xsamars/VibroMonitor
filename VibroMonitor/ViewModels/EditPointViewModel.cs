@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Windows;
+using VibroMonitor.Data;
 using VibroMonitor.Models;
 
 namespace VibroMonitor.ViewModels;
@@ -9,14 +10,18 @@ public partial class EditPointViewModel : ObservableObject
 {
     public EquipmentPoint Point { get; }
 
-    public EditPointViewModel(EquipmentPoint point)
+    private AppDbContext _context;
+
+    public EditPointViewModel(EquipmentPoint point, AppDbContext context)
     {
         Point = point;
+        _context = context;
     }
 
     [RelayCommand]
     private void Save()
     {
+        _context.SaveChangesAsync();
         CloseWindow(true);
     }
 

@@ -3,10 +3,33 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:VibroMonitor"
+        xmlns:local="clr-namespace:VibroMonitor" xmlns:viewmodels="clr-namespace:VibroMonitor.ViewModels" xmlns:models="clr-namespace:VibroMonitor.Models" d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
         mc:Ignorable="d"
         Title="MainWindow" Height="1080" Width="1920">
     <Grid Margin="8">
+
+        <Grid.Resources>
+            <Style TargetType="Button" x:Key="EquipmentButtonStyle">
+                <Setter Property="Background" Value="White" />
+                <Style.Triggers>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding CurrentAlert}" Value="Alarm"/>
+                            <Condition Binding="{Binding IsBlinkOn}" Value="True"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Background" Value="Red" />
+                    </MultiDataTrigger>
+
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding CurrentAlert}" Value="Warning"/>
+                            <Condition Binding="{Binding IsBlinkOn}" Value="True"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Background" Value="Yellow" />
+                    </MultiDataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Resources>
 
         <Grid.RowDefinitions>
             <!-- Верхняя часть -->
@@ -56,7 +79,7 @@
                                     Margin="12"
                                     Cursor="Hand"
                                     BorderThickness="3"
-                                    Background="White"
+                                    Style="{StaticResource EquipmentButtonStyle}"
                                     Command="{Binding DataContext.OpenEquipmentCommand,
                                     RelativeSource={RelativeSource AncestorType=Window}}"
                                     CommandParameter="{Binding}">

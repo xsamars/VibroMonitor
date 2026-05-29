@@ -1,10 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System.Windows;
+using System.ComponentModel.DataAnnotations;
 
 namespace VibroMonitor.Models;
 
 public partial class AlarmItem : ObservableObject
 {
+    [Key]
+    public int Id { get; set; }
     [ObservableProperty]
     private string message;
 

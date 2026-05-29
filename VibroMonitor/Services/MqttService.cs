@@ -1,7 +1,7 @@
 ﻿using MQTTnet;
 using System.Text;
 
-namespace Vibromonitor.Services;
+namespace VibroMonitor.Services;
 
 public class MqttService
 {
