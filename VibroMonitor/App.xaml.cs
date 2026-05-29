@@ -10,5 +10,4 @@ namespace VibroMonitor
     public partial class App : Application
     {
     }
-
 }
