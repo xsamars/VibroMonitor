@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="VibroMonitor/VibroMonitor.csproj" />
+  <Project Path="VibroServer/VibroServer.csproj" Id="0dc76c71-41d5-4395-a4cd-891c4f32c570" />
 </Solution>

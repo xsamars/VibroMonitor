@@ -7,8 +7,23 @@
         Height="700">
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-        <lvc:CartesianChart Series="{Binding Series}"/>
+        <StackPanel Orientation="Horizontal" Margin="8" Grid.Row="0">
+            <TextBlock VerticalAlignment="Center" Text="Интервал: " Margin="0,0,6,0" />
+            <ComboBox Width="160" SelectedValuePath="Tag" SelectedValue="{Binding SelectedRange, Mode=TwoWay}" IsSynchronizedWithCurrentItem="False">
+                <ComboBoxItem Tag="Hour">1 час</ComboBoxItem>
+                <ComboBoxItem Tag="Day">1 день</ComboBoxItem>
+                <ComboBoxItem Tag="Week">1 неделя</ComboBoxItem>
+                <ComboBoxItem Tag="Month">1 месяц</ComboBoxItem>
+                <ComboBoxItem Tag="All">Все</ComboBoxItem>
+            </ComboBox>
+        </StackPanel>
+
+        <lvc:CartesianChart x:Name="Chart" Series="{Binding Series}" Grid.Row="1" />
 
     </Grid>
 

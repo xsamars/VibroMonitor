@@ -8,28 +8,6 @@
         Title="MainWindow" Height="1080" Width="1920">
     <Grid Margin="8">
 
-        <Grid.Resources>
-            <Style TargetType="Button" x:Key="EquipmentButtonStyle">
-                <Setter Property="Background" Value="White" />
-                <Style.Triggers>
-                    <MultiDataTrigger>
-                        <MultiDataTrigger.Conditions>
-                            <Condition Binding="{Binding CurrentAlert}" Value="Alarm"/>
-                            <Condition Binding="{Binding IsBlinkOn}" Value="True"/>
-                        </MultiDataTrigger.Conditions>
-                        <Setter Property="Background" Value="Red" />
-                    </MultiDataTrigger>
-
-                    <MultiDataTrigger>
-                        <MultiDataTrigger.Conditions>
-                            <Condition Binding="{Binding CurrentAlert}" Value="Warning"/>
-                            <Condition Binding="{Binding IsBlinkOn}" Value="True"/>
-                        </MultiDataTrigger.Conditions>
-                        <Setter Property="Background" Value="Yellow" />
-                    </MultiDataTrigger>
-                </Style.Triggers>
-            </Style>
-        </Grid.Resources>
 
         <Grid.RowDefinitions>
             <!-- Верхняя часть -->
@@ -43,8 +21,7 @@
         <!-- ВЕРХНЯЯ ЧАСТЬ -->
         <!-- ===================== -->
 
-        <Grid Grid.Row="0">
-
+        <Grid Grid.Row="0" RowDefinitions="Auto, *">
             <!-- Кнопка настроек -->
             <Button Width="42"
                     Height="42"
@@ -53,12 +30,25 @@
                     Margin="0,0,6,0"
                     Cursor="Hand"
                     FontSize="18"
-                    
+                    Grid.Row="0"
                     Content="⚙"
                     Command="{Binding OpenSettingsCommand}"/>
 
+            <!-- Кнопка добавления нового оборудования -->
+            <Button Width="42"
+                    Height="42"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,0,56,0"
+                    Cursor="Hand"
+                    FontSize="18"
+                    Grid.Row="0"
+                    Content="+"
+                    Command="{Binding AddEquipmentCommand}"/>
+
             <!-- Скролл объектов -->
             <ScrollViewer Margin="0,0,0,10"
+                          Grid.Row="1"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
 
@@ -74,43 +64,283 @@
                         <DataTemplate>
 
                             <!-- Кликабельная карточка -->
-                            <Button Width="500"
-                                    Height="220"
-                                    Margin="12"
-                                    Cursor="Hand"
-                                    BorderThickness="3"
-                                    Style="{StaticResource EquipmentButtonStyle}"
-                                    Command="{Binding DataContext.OpenEquipmentCommand,
-                                    RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}">
+                            <Grid Width="400"
+                                  Height="220"
+                                  Margin="12">
 
-                                <Grid>
+                                <Border BorderBrush="Black" BorderThickness="3" Background="White">
+                                    <Grid Background="Transparent">
 
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="35"/>
-                                        <RowDefinition Height="*"/>
-                                    </Grid.RowDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="35"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
 
-                                    <!-- Название -->
-                                    <TextBlock Grid.Row="0"
-                                               Text="{Binding Name}"
-                                               FontSize="18"
-                                               FontWeight="SemiBold"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"/>
+                                        <!-- Основное содержимое (открывает детали при клике) -->
+                                        <Button Grid.Row="0" Grid.RowSpan="2"
+                                                Cursor="Hand"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Command="{Binding DataContext.OpenEquipmentCommand,
+                                                RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Background" Value="Transparent" />
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Grid>
+                                                                    <!-- Overlay for breathing effect -->
+                                                                    <Rectangle x:Name="PulseRect" Fill="Transparent" Opacity="0" IsHitTestVisible="False"
+                                                                               HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                                                                    <ContentPresenter />
+                                                                </Grid>
+                                                                <ControlTemplate.Triggers>
+                                                                    <MultiDataTrigger>
+                                                                        <MultiDataTrigger.Conditions>
+                                                                            <Condition Binding="{Binding CurrentAlert}" Value="{x:Static models:AlertLevel.HiHi}"/>
+                                                                        </MultiDataTrigger.Conditions>
+                                                                        <MultiDataTrigger.EnterActions>
+                                                                            <BeginStoryboard Name="RedPulseStoryboard">
+                                                                                <Storyboard RepeatBehavior="Forever">
+                                                                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="PulseRect" Storyboard.TargetProperty="Opacity">
+                                                                                        <EasingDoubleKeyFrame KeyTime="0:0:0" Value="0" />
+                                                                                        <EasingDoubleKeyFrame KeyTime="0:0:1" Value="0.8">
+                                                                                            <EasingDoubleKeyFrame.EasingFunction>
+                                                                                                <SineEase EasingMode="EaseInOut" />
+                                                                                            </EasingDoubleKeyFrame.EasingFunction>
+                                                                                        </EasingDoubleKeyFrame>
+                                                                                        <EasingDoubleKeyFrame KeyTime="0:0:2" Value="0">
+                                                                                            <EasingDoubleKeyFrame.EasingFunction>
+                                                                                                <SineEase EasingMode="EaseInOut" />
+                                                                                            </EasingDoubleKeyFrame.EasingFunction>
+                                                                                        </EasingDoubleKeyFrame>
+                                                                                    </DoubleAnimationUsingKeyFrames>
+                                                                                </Storyboard>
+                                                                            </BeginStoryboard>
+                                                                        </MultiDataTrigger.EnterActions>
+                                                                        <MultiDataTrigger.ExitActions>
+                                                                            <StopStoryboard BeginStoryboardName="RedPulseStoryboard" />
+                                                                        </MultiDataTrigger.ExitActions>
+                                                                        <MultiDataTrigger.Setters>
+                                                                            <Setter TargetName="PulseRect" Property="Fill" Value="Red" />
+                                                                        </MultiDataTrigger.Setters>
+                                                                    </MultiDataTrigger>
 
-                                    <!-- Картинка -->
-                                    <Border Grid.Row="1"
-                                            Margin="10"
-                                            BorderBrush="Black"
-                                            BorderThickness="2" MinHeight="100" MinWidth="100">
+                                                                    <!-- LoLo (red breathing) -->
+                                                                    <MultiDataTrigger>
+                                                                        <MultiDataTrigger.Conditions>
+                                                                            <Condition Binding="{Binding CurrentAlert}" Value="{x:Static models:AlertLevel.LoLo}"/>
+                                                                        </MultiDataTrigger.Conditions>
+                                                                        <MultiDataTrigger.EnterActions>
+                                                                            <BeginStoryboard Name="RedPulseStoryboard2">
+                                                                                <Storyboard RepeatBehavior="Forever">
+                                                                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="PulseRect" Storyboard.TargetProperty="Opacity">
+                                                                                        <EasingDoubleKeyFrame KeyTime="0:0:0" Value="0" />
+                                                                                        <EasingDoubleKeyFrame KeyTime="0:0:1" Value="0.8">
+                                                                                            <EasingDoubleKeyFrame.EasingFunction>
+                                                                                                <SineEase EasingMode="EaseInOut" />
+                                                                                            </EasingDoubleKeyFrame.EasingFunction>
+                                                                                        </EasingDoubleKeyFrame>
+                                                                                        <EasingDoubleKeyFrame KeyTime="0:0:2" Value="0">
+                                                                                            <EasingDoubleKeyFrame.EasingFunction>
+                                                                                                <SineEase EasingMode="EaseInOut" />
+                                                                                            </EasingDoubleKeyFrame.EasingFunction>
+                                                                                        </EasingDoubleKeyFrame>
+                                                                                    </DoubleAnimationUsingKeyFrames>
+                                                                                </Storyboard>
+                                                                            </BeginStoryboard>
+                                                                        </MultiDataTrigger.EnterActions>
+                                                                        <MultiDataTrigger.ExitActions>
+                                                                            <StopStoryboard BeginStoryboardName="RedPulseStoryboard2" />
+                                                                        </MultiDataTrigger.ExitActions>
+                                                                        <MultiDataTrigger.Setters>
+                                                                            <Setter TargetName="PulseRect" Property="Fill" Value="Red" />
+                                                                        </MultiDataTrigger.Setters>
+                                                                    </MultiDataTrigger>
 
-                                        <Image Source="{Binding ImagePath}"
-                                               Stretch="Uniform" MinHeight="100" MinWidth="100"/>
-                                    </Border>
+                                                                    <!-- Hi (yellow breathing) -->
+                                                                    <MultiDataTrigger>
+                                                                        <MultiDataTrigger.Conditions>
+                                                                            <Condition Binding="{Binding CurrentAlert}" Value="{x:Static models:AlertLevel.Hi}"/>
+                                                                        </MultiDataTrigger.Conditions>
+                                                                        <MultiDataTrigger.EnterActions>
+                                                                            <BeginStoryboard Name="YellowPulseStoryboard">
+                                                                                <Storyboard RepeatBehavior="Forever">
+                                                                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="PulseRect" Storyboard.TargetProperty="Opacity">
+                                                                                        <EasingDoubleKeyFrame KeyTime="0:0:0" Value="0" />
+                                                                                        <EasingDoubleKeyFrame KeyTime="0:0:1" Value="0.8">
+                                                                                            <EasingDoubleKeyFrame.EasingFunction>
+                                                                                                <SineEase EasingMode="EaseInOut" />
+                                                                                            </EasingDoubleKeyFrame.EasingFunction>
+                                                                                        </EasingDoubleKeyFrame>
+                                                                                        <EasingDoubleKeyFrame KeyTime="0:0:2" Value="0">
+                                                                                            <EasingDoubleKeyFrame.EasingFunction>
+                                                                                                <SineEase EasingMode="EaseInOut" />
+                                                                                            </EasingDoubleKeyFrame.EasingFunction>
+                                                                                        </EasingDoubleKeyFrame>
+                                                                                    </DoubleAnimationUsingKeyFrames>
+                                                                                </Storyboard>
+                                                                            </BeginStoryboard>
+                                                                        </MultiDataTrigger.EnterActions>
+                                                                        <MultiDataTrigger.ExitActions>
+                                                                            <StopStoryboard BeginStoryboardName="YellowPulseStoryboard" />
+                                                                        </MultiDataTrigger.ExitActions>
+                                                                        <MultiDataTrigger.Setters>
+                                                                            <Setter TargetName="PulseRect" Property="Fill" Value="Yellow" />
+                                                                        </MultiDataTrigger.Setters>
+                                                                    </MultiDataTrigger>
 
-                                </Grid>
-                            </Button>
+                                                                    <!-- Lo (yellow breathing) -->
+                                                                    <MultiDataTrigger>
+                                                                        <MultiDataTrigger.Conditions>
+                                                                            <Condition Binding="{Binding CurrentAlert}" Value="{x:Static models:AlertLevel.Lo}"/>
+                                                                        </MultiDataTrigger.Conditions>
+                                                                        <MultiDataTrigger.EnterActions>
+                                                                            <BeginStoryboard Name="YellowPulseStoryboard2">
+                                                                                <Storyboard RepeatBehavior="Forever">
+                                                                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="PulseRect" Storyboard.TargetProperty="Opacity">
+                                                                                        <EasingDoubleKeyFrame KeyTime="0:0:0" Value="0" />
+                                                                                        <EasingDoubleKeyFrame KeyTime="0:0:1" Value="0.8">
+                                                                                            <EasingDoubleKeyFrame.EasingFunction>
+                                                                                                <SineEase EasingMode="EaseInOut" />
+                                                                                            </EasingDoubleKeyFrame.EasingFunction>
+                                                                                        </EasingDoubleKeyFrame>
+                                                                                        <EasingDoubleKeyFrame KeyTime="0:0:2" Value="0">
+                                                                                            <EasingDoubleKeyFrame.EasingFunction>
+                                                                                                <SineEase EasingMode="EaseInOut" />
+                                                                                            </EasingDoubleKeyFrame.EasingFunction>
+                                                                                        </EasingDoubleKeyFrame>
+                                                                                    </DoubleAnimationUsingKeyFrames>
+                                                                                </Storyboard>
+                                                                            </BeginStoryboard>
+                                                                        </MultiDataTrigger.EnterActions>
+                                                                        <MultiDataTrigger.ExitActions>
+                                                                            <StopStoryboard BeginStoryboardName="YellowPulseStoryboard2" />
+                                                                        </MultiDataTrigger.ExitActions>
+                                                                        <MultiDataTrigger.Setters>
+                                                                            <Setter TargetName="PulseRect" Property="Fill" Value="Yellow" />
+                                                                        </MultiDataTrigger.Setters>
+                                                                    </MultiDataTrigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </Button.Style>
+                                            <Grid>
+
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="35"/>
+                                                    <RowDefinition Height="*"/>
+                                                </Grid.RowDefinitions>
+
+                                                <!-- Название -->
+                                                <TextBlock Grid.Row="0"
+                                                           Text="{Binding Name}"
+                                                           FontSize="18"
+                                                           FontWeight="SemiBold"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"/>
+
+                                                <!-- DEBUG: current alert level -->
+                                                <TextBlock Grid.Row="0"
+                                                           Text="{Binding CurrentAlert}"
+                                                           FontSize="12"
+                                                           FontWeight="Bold"
+                                                           HorizontalAlignment="Right"
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,10,0"
+                                                           Background="#80FFFFFF"
+                                                           Padding="6,2"
+                                                           Foreground="Black"/>
+
+                                                <!-- Картинка -->
+                                                <Border Grid.Row="1"
+                                                        Margin="10"
+                                                        BorderBrush="Black"
+                                                        BorderThickness="2" MinHeight="100" MinWidth="100">
+
+                                                    <Image Source="{Binding ImagePath}"
+                                                           Stretch="Uniform" MinHeight="100" MinWidth="100"/>
+                                                </Border>
+
+                                                <!-- DEBUG: list of points and levels 
+                                                <ItemsControl Grid.Row="1" ItemsSource="{Binding Points}" Margin="8" HorizontalAlignment="Left">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="{Binding Name}" FontSize="12" Margin="0,0,6,0" />
+                                                                <TextBlock Text=": " FontSize="12" />
+                                                                <TextBlock Text="{Binding Value}" FontSize="12" Margin="0,0,6,0" />
+                                                                <TextBlock Text="({Binding ComputedLevel})" FontSize="12" Foreground="Black" />
+                                                            </StackPanel>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>-->
+
+                                            </Grid>
+                                        </Button>
+
+                                        <!-- Кнопки действий (видны при наведении) -->
+                                        <StackPanel Grid.Row="0" Grid.RowSpan="2" 
+                                                    Orientation="Vertical"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Top"
+                                                    Margin="8"
+                                                    x:Name="ActionButtons"
+                                                    Opacity="0">
+
+                                            <Button Width="32" Height="32" Margin="0,0,0,4"
+                                                    Cursor="Hand"
+                                                    Background="#2196F3"
+                                                    Foreground="White"
+                                                    FontSize="14"
+                                                    FontWeight="Bold"
+                                                    Content="✎"
+                                                    Command="{Binding DataContext.EditEquipmentCommand,
+                                                    RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"/>
+
+                                            <Button Width="32" Height="32"
+                                                    Cursor="Hand"
+                                                    Background="#f44336"
+                                                    Foreground="White"
+                                                    FontSize="14"
+                                                    FontWeight="Bold"
+                                                    Content="✕"
+                                                    Command="{Binding DataContext.RemoveEquipmentCommand,
+                                                    RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"/>
+
+                                        </StackPanel>
+
+                                    </Grid>
+                                </Border>
+
+                                <Grid.Triggers>
+                                    <EventTrigger RoutedEvent="MouseEnter">
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="ActionButtons" 
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0:0:0.2"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                    <EventTrigger RoutedEvent="MouseLeave">
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="ActionButtons" 
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 To="0" Duration="0:0:0.2"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Grid.Triggers>
+
+                            </Grid>
 
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -193,6 +423,25 @@
 
                                 <Border BorderBrush="#BDBDBD"
                                         BorderThickness="0,0,0,1">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.HiHi}">
+                                                    <Setter Property="Background" Value="Red" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.LoLo}">
+                                                    <Setter Property="Background" Value="Red" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.Hi}">
+                                                    <Setter Property="Background" Value="Yellow" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.Lo}">
+                                                    <Setter Property="Background" Value="Yellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
 
                                     <Grid Height="48">
 
@@ -220,13 +469,13 @@
 
                                         <!-- Время появления -->
                                         <TextBlock Grid.Column="2"
-                                                   Text="{Binding Created}"
+                                                   Text="{Binding CreatedLocal, StringFormat={}{0:dd.MM.yyyy HH:mm:ss}}"
                                                    VerticalAlignment="Center"
                                                    Margin="10,0"/>
 
                                         <!-- Время квитирования -->
                                         <TextBlock Grid.Column="3"
-                                                   Text="{Binding Acknowledged}"
+                                                   Text="{Binding AckedTimeDisplay}"
                                                    VerticalAlignment="Center"
                                                    Margin="10,0"/>
 
@@ -241,6 +490,7 @@
                                         Width="120"
                                         Height="32"
                                         Content="Квитировать"
+                                        Visibility="{Binding ShowAckButton}"
                                         Command="{Binding DataContext.AckAlarmCommand,
                                                           RelativeSource={RelativeSource AncestorType=Window}}"
                                         CommandParameter="{Binding}"/>

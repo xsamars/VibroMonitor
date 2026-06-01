@@ -53,11 +53,20 @@ public partial class EquipmentPoint : ObservableObject
 
     public Models.AlertLevel GetAlertLevel()
     {
-        // evaluate based on Value
-        if (Value >= HiHi) return Models.AlertLevel.Alarm;
-        if (Value >= Hi) return Models.AlertLevel.Warning;
-        if (Value <= LoLo) return Models.AlertLevel.Alarm;
-        if (Value <= Lo) return Models.AlertLevel.Warning;
+        // evaluate based on Value and return specific level for which threshold triggered
+        if (Value >= HiHi) return Models.AlertLevel.HiHi;
+        if (Value >= Hi) return Models.AlertLevel.Hi;
+        if (Value <= LoLo) return Models.AlertLevel.LoLo;
+        if (Value <= Lo) return Models.AlertLevel.Lo;
         return Models.AlertLevel.Normal;
+    }
+
+    // Computed level for UI binding (updates when Value changes)
+    [System.Text.Json.Serialization.JsonIgnore]
+    public Models.AlertLevel ComputedLevel => GetAlertLevel();
+
+    partial void OnValueChanged(double value)
+    {
+        OnPropertyChanged(nameof(ComputedLevel));
     }
 }

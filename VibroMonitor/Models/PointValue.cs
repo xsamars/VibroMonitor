@@ -11,4 +11,12 @@ namespace VibroMonitor.Models
 
         public double Value { get; set; }
     }
+
+    public class PointHistory
+    {
+        public int Id { get; set; }
+        public int EquipmentPointId { get; set; }
+        public DateTime Time { get; set; }
+        public double Value { get; set; }
+    }
 }

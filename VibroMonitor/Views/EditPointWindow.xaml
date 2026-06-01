@@ -34,18 +34,42 @@
                  Margin="0,5,0,15"
                  Text="{Binding Point.MqttTopic}"/>
 
+        <!-- Thresholds -->
+        <Grid Grid.Row="4" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="HiHi"/>
+                <TextBox Margin="0,5,8,10" Text="{Binding Point.HiHi, UpdateSourceTrigger=PropertyChanged}" Height="28" />
+
+                <TextBlock Text="Hi"/>
+                <TextBox Margin="0,5,8,0" Text="{Binding Point.Hi, UpdateSourceTrigger=PropertyChanged}" Height="28" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="Lo"/>
+                <TextBox Margin="0,5,0,10" Text="{Binding Point.Lo, UpdateSourceTrigger=PropertyChanged}" Height="28" />
+
+                <TextBlock Text="LoLo"/>
+                <TextBox Margin="0,5,0,0" Text="{Binding Point.LoLo, UpdateSourceTrigger=PropertyChanged}" Height="28" />
+            </StackPanel>
+        </Grid>
+
         <!-- Unit -->
-        <TextBlock Grid.Row="4"
+        <TextBlock Grid.Row="5"
                    Text="Единицы измерения"/>
 
-        <TextBox Grid.Row="5"
+        <TextBox Grid.Row="6"
                  Margin="0,5,0,15"
                  Height="30"
                  VerticalAlignment="Top"
                  Text="{Binding Point.Unit}"/>
 
         <!-- Кнопки -->
-        <StackPanel Grid.Row="6"
+        <StackPanel Grid.Row="7"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right">
 

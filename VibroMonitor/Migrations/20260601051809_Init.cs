@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -26,26 +27,18 @@ namespace VibroMonitor.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AlarmItem",
+                name: "PointHistory",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Message = table.Column<string>(type: "text", nullable: false),
-                    Status = table.Column<string>(type: "text", nullable: false),
-                    Created = table.Column<string>(type: "text", nullable: false),
-                    Acknowledged = table.Column<string>(type: "text", nullable: false),
-                    Sensor = table.Column<string>(type: "text", nullable: false),
-                    EquipmentItemId = table.Column<int>(type: "integer", nullable: true)
+                    EquipmentPointId = table.Column<int>(type: "integer", nullable: false),
+                    Time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Value = table.Column<double>(type: "double precision", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AlarmItem", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_AlarmItem_EquipmentItems_EquipmentItemId",
-                        column: x => x.EquipmentItemId,
-                        principalTable: "EquipmentItems",
-                        principalColumn: "Id");
+                    table.PrimaryKey("PK_PointHistory", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -77,10 +70,47 @@ namespace VibroMonitor.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "AlarmItem",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    EquipmentPointId = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    Acked = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    Message = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AckedTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Sensor = table.Column<string>(type: "text", nullable: false),
+                    EquipmentItemId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AlarmItem", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AlarmItem_EquipmentItems_EquipmentItemId",
+                        column: x => x.EquipmentItemId,
+                        principalTable: "EquipmentItems",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_AlarmItem_EquipmentPoints_EquipmentPointId",
+                        column: x => x.EquipmentPointId,
+                        principalTable: "EquipmentPoints",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AlarmItem_EquipmentItemId",
                 table: "AlarmItem",
                 column: "EquipmentItemId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AlarmItem_EquipmentPointId",
+                table: "AlarmItem",
+                column: "EquipmentPointId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EquipmentPoints_EquipmentItemId",
@@ -93,6 +123,9 @@ namespace VibroMonitor.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AlarmItem");
+
+            migrationBuilder.DropTable(
+                name: "PointHistory");
 
             migrationBuilder.DropTable(
                 name: "EquipmentPoints");

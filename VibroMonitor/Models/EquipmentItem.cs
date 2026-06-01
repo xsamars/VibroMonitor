@@ -21,12 +21,14 @@ public partial class EquipmentItem : ObservableObject
     // Placeholder for alarms
     public ObservableCollection<AlarmItem> Alarms { get; set; } = new();
 
-    // Alerting state
-    [NotMapped]
-    public Models.AlertLevel CurrentAlert { get; set; } = Models.AlertLevel.Normal;
+    // Alerting state (observable so UI updates)
+    [property: NotMapped]
+    [ObservableProperty]
+    private Models.AlertLevel currentAlert = Models.AlertLevel.Normal;
 
-    [NotMapped]
-    public bool IsBlinkOn { get; set; }
+    [property: NotMapped]
+    [ObservableProperty]
+    private bool isBlinkOn;
 
     public void UpdateAlertFromPoints()
     {
@@ -36,7 +38,7 @@ public partial class EquipmentItem : ObservableObject
             var lvl = p.GetAlertLevel();
             if ((int)lvl > (int)highest)
                 highest = lvl;
-            if (highest == Models.AlertLevel.Alarm)
+            if (highest == Models.AlertLevel.HiHi)
                 break;
         }
 

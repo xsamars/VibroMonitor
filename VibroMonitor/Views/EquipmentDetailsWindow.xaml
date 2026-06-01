@@ -215,32 +215,99 @@
         </Grid>
 
         <!-- ЖУРНАЛ -->
-        <DataGrid Grid.Row="1"
-                  Margin="0,10,0,0"
-                  AutoGenerateColumns="False"
-                  ItemsSource="{Binding Equipment.Alarms}">
+        <Border Grid.Row="1" Margin="0,10,0,0" BorderBrush="#BDBDBD" BorderThickness="1" Background="White">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="40" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-            <DataGrid.Columns>
+                <!-- Header same as main window -->
+                <Grid Grid.Row="0" Background="#DCDCDC">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1.5*"/>
+                        <ColumnDefinition Width="1.5*"/>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="140"/>
+                    </Grid.ColumnDefinitions>
 
-                <DataGridTextColumn Header="Сообщение"
-                                    Binding="{Binding Message}"
-                                    Width="*"/>
+                    <TextBlock Grid.Column="0" Text="Сообщение" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0"/>
+                    <TextBlock Grid.Column="1" Text="Статус" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0"/>
+                    <TextBlock Grid.Column="2" Text="Время появления" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0"/>
+                    <TextBlock Grid.Column="3" Text="Время квитирования" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0"/>
+                    <TextBlock Grid.Column="4" Text="Датчик" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0"/>
+                </Grid>
 
-                <DataGridTextColumn Header="Статус"
-                                    Binding="{Binding Status}"
-                                    Width="150"/>
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Equipment.Alarms}">
 
-                <DataGridTextColumn Header="Время"
-                                    Binding="{Binding Created}"
-                                    Width="200"/>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
 
-                <DataGridTextColumn Header="Датчик"
-                                    Binding="{Binding Sensor}"
-                                    Width="250"/>
+                            <Border BorderBrush="#BDBDBD" BorderThickness="0,0,0,1">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.HiHi}">
+                                                <Setter Property="Background" Value="Red" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.LoLo}">
+                                                <Setter Property="Background" Value="Red" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.Hi}">
+                                                <Setter Property="Background" Value="Yellow" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.Lo}">
+                                                <Setter Property="Background" Value="Yellow" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid Height="48">
 
-            </DataGrid.Columns>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="3*"/>
+                                        <ColumnDefinition Width="1*"/>
+                                        <ColumnDefinition Width="1.5*"/>
+                                        <ColumnDefinition Width="1.5*"/>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="140"/>
+                                    </Grid.ColumnDefinitions>
 
-        </DataGrid>
+                                    <!-- Сообщение -->
+                                    <TextBlock Grid.Column="0" Text="{Binding Message}" VerticalAlignment="Center" Margin="10,0" TextWrapping="Wrap"/>
+
+                                    <!-- Статус -->
+                                    <TextBlock Grid.Column="1" Text="{Binding Status}" VerticalAlignment="Center" Margin="10,0"/>
+
+                                    <!-- Время появления -->
+                                    <TextBlock Grid.Column="2" Text="{Binding CreatedLocal, StringFormat={}{0:dd.MM.yyyy HH:mm:ss}}" VerticalAlignment="Center" Margin="10,0"/>
+
+                                    <!-- Время квитирования -->
+                                    <TextBlock Grid.Column="3" Text="{Binding AckedTimeDisplay}" VerticalAlignment="Center" Margin="10,0"/>
+
+                                    <!-- Датчик -->
+                                    <TextBlock Grid.Column="4" Text="{Binding Sensor}" VerticalAlignment="Center" Margin="10,0"/>
+
+                                    <!-- Кнопка -->
+                                    <Button Grid.Column="5" Width="120" Height="32" Content="Квитировать"
+                                            Visibility="{Binding ShowAckButton}"
+                                            Command="{Binding DataContext.AckAlarmCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"/>
+
+                                </Grid>
+                            </Border>
+
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+
+                </ItemsControl>
+            </ScrollViewer>
+            </Grid>
+        </Border>
 
     </Grid>
 

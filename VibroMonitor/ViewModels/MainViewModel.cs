@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
+using System.Linq;
 using System.Windows;
 using VibroMonitor.Services;
 using VibroMonitor.Models;
@@ -29,7 +30,11 @@ namespace VibroMonitor.ViewModels
         {
             _db = db;
             _mqttService = mqttService;
+            _mqttService.MessageReceived += OnMessageReceived;
         }
+
+        // timer to refresh alarms periodically
+        private System.Windows.Threading.DispatcherTimer? _alarmsTimer;
 
         private void OnMessageReceived(string topic, string payload)
         {
@@ -48,13 +53,23 @@ namespace VibroMonitor.ViewModels
 
                             // update equipment alert
                             var prev = equipment.CurrentAlert;
+                            var levelBefore = prev;
                             equipment.UpdateAlertFromPoints();
+                            var levelAfter = equipment.CurrentAlert;
+
+                            Console.WriteLine($"[DEBUG] MQTT topic={topic} point={point.Name} value={val} computedLevel={point.GetAlertLevel()} equipmentPrev={levelBefore} equipmentNow={levelAfter}");
+
                             if (equipment.CurrentAlert != prev)
                             {
-                                if (equipment.CurrentAlert == Models.AlertLevel.Alarm)
+                                if (equipment.CurrentAlert == Models.AlertLevel.HiHi || equipment.CurrentAlert == Models.AlertLevel.LoLo)
                                 {
-                                    AlarmItems.Add(new AlarmItem { Message = $"Авария в {equipment.Name}", Status = "Активно", Created = DateTime.Now.ToString(), Sensor = point.Name });
+                                    equipment.IsBlinkOn = true;
                                 }
+                                else
+                                {
+                                    equipment.IsBlinkOn = false;
+                                }
+                                Console.WriteLine($"[DEBUG] Equipment '{equipment.Name}' CurrentAlert changed {levelBefore} -> {equipment.CurrentAlert}, IsBlinkOn={equipment.IsBlinkOn}");
                             }
                         });
                     }
@@ -99,15 +114,14 @@ namespace VibroMonitor.ViewModels
             };
             timer.Start();
 
-            AlarmItems.Add(new()
-            {
-                Message = "Превышение виброскорости",
-                Status = "Активно",
-                Created = "27.05.2026 15:26",
-                Sensor = "Установка 1"
-            }
-                );
-            // example static alarms (can be loaded from DB later)
+            // start alarms refresh timer (every 5 seconds)
+            _alarmsTimer = new System.Windows.Threading.DispatcherTimer();
+            _alarmsTimer.Interval = TimeSpan.FromSeconds(5);
+            _alarmsTimer.Tick += async (s, e) => await RefreshAlarmsAsync();
+            _alarmsTimer.Start();
+
+            // initial load of alarms
+            await RefreshAlarmsAsync();
 
         }
 
@@ -118,9 +132,34 @@ namespace VibroMonitor.ViewModels
         }
 
         [RelayCommand]
-        private void AckAlarm(AlarmItem item)
+        private async Task AckAlarm(AlarmItem item)
         {
             item.Status = "Квитировано";
+            item.Acked = true;
+            item.AckedTime = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+        }
+
+        private async Task RefreshAlarmsAsync()
+        {
+            try
+            {
+                var alarms = await _db.AlarmItem
+                    .OrderByDescending(a => a.Created)
+                    .ToListAsync();
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    AlarmItems.Clear();
+                    foreach (var a in alarms)
+                        AlarmItems.Add(a);
+                });
+            }
+            catch (Exception ex)
+            {
+                // log or ignore for now
+                Console.WriteLine($"Failed to refresh alarms: {ex.Message}");
+            }
         }
         [RelayCommand]
         private async Task OpenEquipment(EquipmentItem item)
@@ -145,15 +184,58 @@ namespace VibroMonitor.ViewModels
         [RelayCommand]
         private async Task AddEquipment()
         {
-            var newItem = new EquipmentItem() { Name = "Новое оборудование" };
-            _db.EquipmentItems.Add(newItem);
-            await _db.SaveChangesAsync();
-            EquipmentItems.Add(newItem);
+            var newItem = new EquipmentItem() { Name = "", ImagePath = "" };
+
+            var vm = new EditEquipmentViewModel();
+            vm.Initialize(newItem, async () =>
+            {
+                _db.EquipmentItems.Add(newItem);
+                await _db.SaveChangesAsync();
+                EquipmentItems.Add(newItem);
+            });
+
+            var window = new EditEquipmentWindow()
+            {
+                DataContext = vm
+            };
+
+            var result = window.ShowDialog();
+            if (result != true)
+            {
+                // Если отменили, удалим из БД если что-то там было
+                if (newItem.Id != 0)
+                {
+                    _db.EquipmentItems.Remove(newItem);
+                    await _db.SaveChangesAsync();
+                }
+            }
+        }
+
+        [RelayCommand]
+        private async Task EditEquipment(EquipmentItem item)
+        {
+            var vm = new EditEquipmentViewModel();
+            vm.Initialize(item, async () =>
+            {
+                _db.EquipmentItems.Update(item);
+                await _db.SaveChangesAsync();
+            });
+
+            var window = new EditEquipmentWindow()
+            {
+                DataContext = vm
+            };
+
+            window.ShowDialog();
         }
 
         [RelayCommand]
         private async Task RemoveEquipment(EquipmentItem item)
         {
+            var result = MessageBox.Show($"Вы уверены, что хотите удалить \"{item.Name}\"?", "Подтверждение удаления", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result != MessageBoxResult.Yes)
+                return;
+
             _db.EquipmentItems.Remove(item);
             await _db.SaveChangesAsync();
             EquipmentItems.Remove(item);

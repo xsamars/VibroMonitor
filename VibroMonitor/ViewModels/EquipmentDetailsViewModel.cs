@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Windows;
+using System.Linq;
 using VibroMonitor.Services;
 using VibroMonitor.Models;
 using VibroMonitor.Views;
@@ -44,6 +45,30 @@ public partial class EquipmentDetailsViewModel : ObservableObject
         }
 
         await SubscribePointsAsync();
+
+        // load alarms for this equipment
+        await LoadAlarmsAsync();
+    }
+
+    // Load alarms associated with this equipment
+    private async Task LoadAlarmsAsync()
+    {
+        try
+        {
+            var alarms = await _db.AlarmItem
+                .Include(a => a.EquipmentPoint)
+                .Where(a => a.EquipmentPoint != null && a.EquipmentPoint.EquipmentItemId == Equipment.Id)
+                .OrderByDescending(a => a.Created)
+                .ToListAsync();
+
+            Equipment.Alarms.Clear();
+            foreach (var a in alarms)
+                Equipment.Alarms.Add(a);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load alarms for equipment {Equipment.Id}: {ex.Message}");
+        }
     }
 
     private async Task SubscribePointsAsync()
@@ -72,6 +97,19 @@ public partial class EquipmentDetailsViewModel : ObservableObject
         {
             point.Value = value;
         });
+    }
+
+    [RelayCommand]
+    private async Task AckAlarm(AlarmItem item)
+    {
+        if (item == null) return;
+        item.Status = "Квитировано";
+        item.Acked = true;
+        item.AckedTime = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        // refresh alarms list
+        await LoadAlarmsAsync();
     }
 
     public void AddPoint(double x, double y)
@@ -125,7 +163,7 @@ public partial class EquipmentDetailsViewModel : ObservableObject
     [RelayCommand]
     private void OpenChart(EquipmentPoint point)
     {
-        var vm = new PointChartViewModel(point);
+        var vm = new PointChartViewModel(point, _db);
 
         var window = new ChartWindow()
         {
