@@ -45,10 +45,6 @@ namespace VibroMonitor.ViewModels
                         Application.Current.Dispatcher.Invoke(() =>
                         {
                             point.Value = val;
-                            // update in-memory history (client-side only)
-                            point.History.Add(new PointValue { Time = DateTime.Now, Value = val });
-                            while (point.History.Count > 500)
-                                point.History.RemoveAt(0);
 
                             // update equipment alert
                             var prev = equipment.CurrentAlert;

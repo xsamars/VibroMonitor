@@ -71,18 +71,6 @@ public partial class EquipmentDetailsViewModel : ObservableObject
         Application.Current.Dispatcher.Invoke(() =>
         {
             point.Value = value;
-
-            point.History.Add(new PointValue()
-            {
-                Time = DateTime.Now,
-                Value = value
-            });
-
-            // Ограничение истории
-            while (point.History.Count > 500)
-            {
-                point.History.RemoveAt(0);
-            }
         });
     }
 
