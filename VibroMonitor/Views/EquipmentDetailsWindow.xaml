@@ -6,7 +6,7 @@
         xmlns:models="clr-namespace:VibroMonitor.Models"
         mc:Ignorable="d"
         WindowState="Maximized"
-        Background="#ECECEC"
+        Background="{StaticResource WindowBackground}"
         Title="Объект" Width="1800" Height="900" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
 
     <Grid Margin="10">
@@ -26,14 +26,14 @@
 
             <!-- КАРТИНКА -->
             <Border Grid.Column="0"
-                    BorderBrush="Black"
-                    BorderThickness="2"
-                    Background="White">
+                    BorderBrush="{StaticResource BorderBrushModern}"
+                    BorderThickness="1"
+                    Background="{StaticResource CardBackground}">
 
                 <Grid>
 
                     <!-- Картинка -->
-                    <Image Source="{Binding Equipment.ImagePath}"
+                    <Image Source="{Binding Equipment.ImageData, Converter={StaticResource ByteArrayToImageConverter}}"
                            Stretch="Uniform"/>
 
                     <!-- Слой точек -->
@@ -61,46 +61,55 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type models:EquipmentPoint}">
 
-                                    <Button Width="14"
-                                            Height="14"
-                                            Background="Red"
-                                            BorderBrush="White"
-                                            BorderThickness="2"
-                                            Cursor="Hand"
-                                            Tag="{Binding DataContext,RelativeSource={RelativeSource AncestorType=Window}}"
-                                            Command="{Binding DataContext.OpenChartCommand,
-                                                            RelativeSource={RelativeSource AncestorType=Window}}"
+                                    <StackPanel>
+                                        <Button Width="14"
+         Height="14"
+         Background="Red"
+         BorderBrush="White"
+         BorderThickness="2"
+         Cursor="Hand"
+         Tag="{Binding DataContext,RelativeSource={RelativeSource AncestorType=Window}}"
+         Command="{Binding DataContext.OpenHighChartCommand,
+                         RelativeSource={RelativeSource AncestorType=Window}}"
 
-                                            CommandParameter="{Binding}">
-                                        <Button.ContextMenu>
-                                            <ContextMenu>
+         CommandParameter="{Binding}">
+                                            <Button.ContextMenu>
+                                                <ContextMenu>
 
-                                                <MenuItem Header="Редактировать"
-                                                      Command="{Binding PlacementTarget.Tag.EditPointCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"
-                                                      CommandParameter="{Binding}" />
+                                                    <MenuItem Header="Редактировать"
+                   Command="{Binding PlacementTarget.Tag.EditPointCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"
+                   CommandParameter="{Binding}"
+                   Visibility="{Binding PlacementTarget.Tag.IsAdminAuthenticated, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}, Converter={StaticResource BoolToVis}}" />
 
-                                                <MenuItem Header="Удалить"
-                                                      Command="{Binding PlacementTarget.Tag.RemovePointCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"
-                                                      CommandParameter="{Binding}" />
+                                                    <MenuItem Header="Удалить"
+                   Command="{Binding PlacementTarget.Tag.RemovePointCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ContextMenu}}"
+                   CommandParameter="{Binding}"
+                   Visibility="{Binding PlacementTarget.Tag.IsAdminAuthenticated, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}, Converter={StaticResource BoolToVis}}" />
 
-                                            </ContextMenu>
-                                        </Button.ContextMenu>
+                                                </ContextMenu>
+                                            </Button.ContextMenu>
 
-                                        <Button.ToolTip>
+                                            <Button.ToolTip>
 
-                                            <StackPanel>
-                                                <TextBlock Text="{Binding Name}"
-                                                           FontWeight="Bold"/>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}"
+                        FontWeight="Bold"/>
 
-                                                <TextBlock Text="{Binding Value}"/>
+                                                    <TextBlock Text="{Binding Value}"/>
 
-                                                <TextBlock Text="{Binding Unit}"/>
-                                            </StackPanel>
+                                                    <TextBlock Text="{Binding Unit}"/>
+                                                </StackPanel>
 
-                                        </Button.ToolTip>
+                                            </Button.ToolTip>
 
-                                    </Button>
-
+                                        </Button>
+                                        <Label Content="{Binding Name}"
+                                               FontWeight="Bold"
+                                               FontSize="15"
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Top" Background="#7F777777"/>
+                                    </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
 
@@ -115,10 +124,10 @@
             <!-- ПРАВАЯ ПАНЕЛЬ -->
             <Border Grid.Column="1"
                     Margin="10,0,0,0"
-                    BorderBrush="Black"
-                    BorderThickness="2"
-                    Background="White">
-                
+                    BorderBrush="{StaticResource BorderBrushModern}"
+                    BorderThickness="1"
+                    Background="{StaticResource CardBackground}">
+
                 <Grid Margin="10">
 
                     <Grid.RowDefinitions>
@@ -126,18 +135,29 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Grid ColumnDefinitions="*, Auto">
+                    <Grid ColumnDefinitions="*, Auto, Auto">
                         <ToggleButton Width="40"
                           Height="40"
                           HorizontalAlignment="Right"
                           VerticalAlignment="Top"
-                          Grid.Column="1"
-              
+                          Grid.Column="2"
                           Margin="0,0,10,10"
-                          IsChecked="{Binding IsEditMode}">
-
-                            <TextBlock Text="✎"/>
+                          IsChecked="{Binding IsEditMode}"
+                          Visibility="{Binding IsAdminAuthenticated, Converter={StaticResource BoolToVis}}"
+                          Background="{StaticResource SuccessBrush}" Foreground="White" BorderThickness="0">
+                            <Border Background="Transparent" CornerRadius="8" Padding="4">
+                                <TextBlock Text="✎" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
                         </ToggleButton>
+
+                        <Button Grid.Column="1"
+                                Width="100"
+                                Height="40"
+                                Margin="0,0,6,10"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Content="Экспорт"
+                                Command="{Binding ExportHistoryCommand}" />
 
                         <TextBlock Text="{Binding Equipment.Name}"
                                FontSize="28"
@@ -146,7 +166,7 @@
                                Grid.Column="0"
                                Margin="0,0,0,15"/>
                     </Grid>
-                    
+
 
                     <!-- СПИСОК ТОЧЕК -->
                     <ListBox Grid.Row="2"
@@ -154,14 +174,13 @@
                              Tag="{Binding}"
                              SelectedItem="{Binding SelectedPoint}"
                              ScrollViewer.VerticalScrollBarVisibility="Hidden">
-
                         <ListBox.ItemTemplate>
 
                             <DataTemplate>
 
                                 <Border Padding="10"
                                         Margin="0,0,0,8"
-                                        BorderBrush="#CCCCCC"
+                                        BorderBrush="{StaticResource BorderBrushModern}"
                                         BorderThickness="1" Width="302">
                                     <Border.ContextMenu>
 
@@ -243,69 +262,69 @@
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding Equipment.Alarms}">
 
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
 
-                            <Border BorderBrush="#BDBDBD" BorderThickness="0,0,0,1">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="Background" Value="Transparent" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.HiHi}">
-                                                <Setter Property="Background" Value="Red" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.LoLo}">
-                                                <Setter Property="Background" Value="Red" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.Hi}">
-                                                <Setter Property="Background" Value="Yellow" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.Lo}">
-                                                <Setter Property="Background" Value="Yellow" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <Grid Height="48">
+                                <Border BorderBrush="#BDBDBD" BorderThickness="0,0,0,1">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.HiHi}">
+                                                    <Setter Property="Background" Value="Red" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.LoLo}">
+                                                    <Setter Property="Background" Value="Red" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.Hi}">
+                                                    <Setter Property="Background" Value="Yellow" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Level}" Value="{x:Static models:AlertLevel.Lo}">
+                                                    <Setter Property="Background" Value="Yellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid Height="48">
 
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="3*"/>
-                                        <ColumnDefinition Width="1*"/>
-                                        <ColumnDefinition Width="1.5*"/>
-                                        <ColumnDefinition Width="1.5*"/>
-                                        <ColumnDefinition Width="2*"/>
-                                        <ColumnDefinition Width="140"/>
-                                    </Grid.ColumnDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="1*"/>
+                                            <ColumnDefinition Width="1.5*"/>
+                                            <ColumnDefinition Width="1.5*"/>
+                                            <ColumnDefinition Width="2*"/>
+                                            <ColumnDefinition Width="140"/>
+                                        </Grid.ColumnDefinitions>
 
-                                    <!-- Сообщение -->
-                                    <TextBlock Grid.Column="0" Text="{Binding Message}" VerticalAlignment="Center" Margin="10,0" TextWrapping="Wrap"/>
+                                        <!-- Сообщение -->
+                                        <TextBlock Grid.Column="0" Text="{Binding Message}" VerticalAlignment="Center" Margin="10,0" TextWrapping="Wrap"/>
 
-                                    <!-- Статус -->
-                                    <TextBlock Grid.Column="1" Text="{Binding Status}" VerticalAlignment="Center" Margin="10,0"/>
+                                        <!-- Статус -->
+                                        <TextBlock Grid.Column="1" Text="{Binding Status}" VerticalAlignment="Center" Margin="10,0"/>
 
-                                    <!-- Время появления -->
-                                    <TextBlock Grid.Column="2" Text="{Binding CreatedLocal, StringFormat={}{0:dd.MM.yyyy HH:mm:ss}}" VerticalAlignment="Center" Margin="10,0"/>
+                                        <!-- Время появления -->
+                                        <TextBlock Grid.Column="2" Text="{Binding CreatedLocal, StringFormat={}{0:dd.MM.yyyy HH:mm:ss}}" VerticalAlignment="Center" Margin="10,0"/>
 
-                                    <!-- Время квитирования -->
-                                    <TextBlock Grid.Column="3" Text="{Binding AckedTimeDisplay}" VerticalAlignment="Center" Margin="10,0"/>
+                                        <!-- Время квитирования -->
+                                        <TextBlock Grid.Column="3" Text="{Binding AckedTimeDisplay}" VerticalAlignment="Center" Margin="10,0"/>
 
-                                    <!-- Датчик -->
-                                    <TextBlock Grid.Column="4" Text="{Binding Sensor}" VerticalAlignment="Center" Margin="10,0"/>
+                                        <!-- Датчик -->
+                                        <TextBlock Grid.Column="4" Text="{Binding Sensor}" VerticalAlignment="Center" Margin="10,0"/>
 
-                                    <!-- Кнопка -->
-                                    <Button Grid.Column="5" Width="120" Height="32" Content="Квитировать"
+                                        <!-- Кнопка -->
+                                        <Button Grid.Column="5" Width="120" Height="32" Content="Квитировать"
                                             Visibility="{Binding ShowAckButton}"
                                             Command="{Binding DataContext.AckAlarmCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                             CommandParameter="{Binding}"/>
 
-                                </Grid>
-                            </Border>
+                                    </Grid>
+                                </Border>
 
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
 
-                </ItemsControl>
-            </ScrollViewer>
+                    </ItemsControl>
+                </ScrollViewer>
             </Grid>
         </Border>
 

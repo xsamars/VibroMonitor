@@ -1,8 +1,79 @@
 ﻿<Application x:Class="VibroMonitor.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:VibroMonitor">
+             xmlns:local="clr-namespace:VibroMonitor"
+             xmlns:converters="clr-namespace:VibroMonitor.Converters">
     <Application.Resources>
-         
+        <converters:ByteArrayToImageConverter x:Key="ByteArrayToImageConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <!-- Modern theme brushes -->
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#1E88E5" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#03A9F4" />
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFFFF" />
+        <SolidColorBrush x:Key="WindowBackground" Color="#F2F5F7" />
+        <SolidColorBrush x:Key="CardBackground" Color="#FFFFFFFF" />
+        <SolidColorBrush x:Key="BorderBrushModern" Color="#E0E0E0" />
+        <SolidColorBrush x:Key="TextPrimary" Color="#222222" />
+        <SolidColorBrush x:Key="SubtleText" Color="#666666" />
+        <SolidColorBrush x:Key="DangerBrush" Color="#E53935" />
+        <SolidColorBrush x:Key="SuccessBrush" Color="#4CAF50" />
+
+        <!-- Global Window defaults -->
+        <Style TargetType="Window">
+            <Setter Property="Background" Value="{StaticResource WindowBackground}" />
+            <Setter Property="FontFamily" Value="Segoe UI" />
+        </Style>
+
+        <!-- Modern button style (flat, rounded) -->
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.95" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.85" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern TextBox style -->
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushModern}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+
+        <!-- Modern Border default (rounded cards) -->
+        <Style TargetType="Border">
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{StaticResource CardBackground}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushModern}" />
+        </Style>
+
     </Application.Resources>
 </Application>

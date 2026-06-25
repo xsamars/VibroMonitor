@@ -23,7 +23,29 @@
             </ComboBox>
         </StackPanel>
 
-        <lvc:CartesianChart x:Name="Chart" Series="{Binding Series}" Grid.Row="1" />
+        <lvc:CartesianChart x:Name="Chart" Series="{Binding Series}" Grid.Row="1" ZoomMode="Both">
+            <lvc:CartesianChart.XAxes>
+            <lvc:AxesCollection>
+                    <lvc:XamlAxis
+                    Labeler="{Binding XLabeler}"
+                    CrosshairLabelsBackground="#FF8C00"
+                    CrosshairLabelsPaint="#8B0000"
+                    CrosshairPaint="#FF8C00"
+                    CrosshairSnapEnabled="True"/>
+                </lvc:AxesCollection>
+            </lvc:CartesianChart.XAxes>
+
+            <lvc:CartesianChart.YAxes>
+                <lvc:AxesCollection>
+                    <lvc:XamlAxis
+                    MinLimit="0"
+                    CrosshairLabelsBackground="#FF8C00"
+                    CrosshairLabelsPaint="#8B0000"
+                    CrosshairPaint="#FF8C00"
+                    CrosshairSnapEnabled="True"/>
+                </lvc:AxesCollection>
+            </lvc:CartesianChart.YAxes>
+        </lvc:CartesianChart>
 
     </Grid>
 

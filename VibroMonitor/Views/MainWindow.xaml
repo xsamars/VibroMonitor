@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VibroMonitor" xmlns:viewmodels="clr-namespace:VibroMonitor.ViewModels" xmlns:models="clr-namespace:VibroMonitor.Models" d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
         mc:Ignorable="d"
-        Title="MainWindow" Height="1080" Width="1920">
+        Title="MainWindow" Height="1080" Width="1920" WindowStartupLocation="CenterScreen" WindowState="Maximized">
     <Grid Margin="8">
 
 
@@ -25,6 +25,7 @@
             <!-- Кнопка настроек -->
             <Button Width="42"
                     Height="42"
+                    x:Name="SettingsBtn"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top"
                     Margin="0,0,6,0"
@@ -34,7 +35,7 @@
                     Content="⚙"
                     Command="{Binding OpenSettingsCommand}"/>
 
-            <!-- Кнопка добавления нового оборудования -->
+            <!-- Кнопка добавления нового оборудования (видна только администратору) -->
             <Button Width="42"
                     Height="42"
                     HorizontalAlignment="Right"
@@ -44,7 +45,8 @@
                     FontSize="18"
                     Grid.Row="0"
                     Content="+"
-                    Command="{Binding AddEquipmentCommand}"/>
+                    Command="{Binding AddEquipmentCommand}"
+                    Visibility="{Binding IsAdminAuthenticated, Converter={StaticResource BoolToVis}}" />
 
             <!-- Скролл объектов -->
             <ScrollViewer Margin="0,0,0,10"
@@ -66,9 +68,10 @@
                             <!-- Кликабельная карточка -->
                             <Grid Width="400"
                                   Height="220"
-                                  Margin="12">
+                                  Margin="12"
+                                  MouseLeftButtonUp="OnEquipmentClick">
 
-                                <Border BorderBrush="Black" BorderThickness="3" Background="White">
+                                <Border BorderBrush="{StaticResource BorderBrushModern}" BorderThickness="1" Background="{StaticResource CardBackground}">
                                     <Grid Background="Transparent">
 
                                         <Grid.RowDefinitions>
@@ -262,7 +265,7 @@
                                                         BorderBrush="Black"
                                                         BorderThickness="2" MinHeight="100" MinWidth="100">
 
-                                                    <Image Source="{Binding ImagePath}"
+                                                    <Image Source="{Binding ImageData, Converter={StaticResource ByteArrayToImageConverter}}"
                                                            Stretch="Uniform" MinHeight="100" MinWidth="100"/>
                                                 </Border>
 
@@ -292,27 +295,28 @@
                                                     x:Name="ActionButtons"
                                                     Opacity="0">
 
+                                            <!-- edit and delete visible only to admin -->
                                             <Button Width="32" Height="32" Margin="0,0,0,4"
-                                                    Cursor="Hand"
-                                                    Background="#2196F3"
-                                                    Foreground="White"
-                                                    FontSize="14"
-                                                    FontWeight="Bold"
-                                                    Content="✎"
-                                                    Command="{Binding DataContext.EditEquipmentCommand,
-                                                    RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"/>
+                                                     Cursor="Hand"
+                                                     Background="#2196F3"
+                                                     Foreground="White"
+                                                     FontSize="14"
+                                                     FontWeight="Bold"
+                                                     Content="✎"
+                                                     Command="{Binding DataContext.EditEquipmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                     CommandParameter="{Binding}"
+                                                     Visibility="{Binding DataContext.IsAdminAuthenticated, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}"/>
 
                                             <Button Width="32" Height="32"
-                                                    Cursor="Hand"
-                                                    Background="#f44336"
-                                                    Foreground="White"
-                                                    FontSize="14"
-                                                    FontWeight="Bold"
-                                                    Content="✕"
-                                                    Command="{Binding DataContext.RemoveEquipmentCommand,
-                                                    RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"/>
+                                                     Cursor="Hand"
+                                                     Background="#f44336"
+                                                     Foreground="White"
+                                                     FontSize="14"
+                                                     FontWeight="Bold"
+                                                     Content="✕"
+                                                     Command="{Binding DataContext.RemoveEquipmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                     CommandParameter="{Binding}"
+                                                     Visibility="{Binding DataContext.IsAdminAuthenticated, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}"/>
 
                                         </StackPanel>
 
@@ -356,9 +360,9 @@
         <!-- ===================== -->
 
         <Border Grid.Row="1"
-                BorderBrush="Black"
-                BorderThickness="2"
-                Background="White">
+                BorderBrush="{StaticResource BorderBrushModern}"
+                BorderThickness="1"
+                Background="{StaticResource CardBackground}">
 
             <Grid>
 
@@ -369,7 +373,7 @@
 
                 <!-- Заголовки -->
                 <Grid Grid.Row="0"
-                      Background="#DCDCDC">
+                      Background="{StaticResource WindowBackground}">
 
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3*"/>
@@ -421,7 +425,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
 
-                                <Border BorderBrush="#BDBDBD"
+                                        <Border BorderBrush="{StaticResource BorderBrushModern}"
                                         BorderThickness="0,0,0,1">
                                     <Border.Style>
                                         <Style TargetType="Border">

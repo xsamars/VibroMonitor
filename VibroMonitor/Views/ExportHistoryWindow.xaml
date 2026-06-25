@@ -1,0 +1,46 @@
+<Window x:Class="VibroMonitor.Views.ExportHistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Экспорт истории" Height="244" Width="420" WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,8">
+            <TextBlock Text="С: " VerticalAlignment="Center" Width="30"/>
+            <DatePicker x:Name="dpFromDate" />
+            <TextBox x:Name="tbFromTime" Width="80" Margin="8,0,0,0" Text="00:00" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,0,0,8">
+            <TextBlock Text="По: " VerticalAlignment="Center" Width="30"/>
+            <DatePicker x:Name="dpToDate" />
+            <TextBox x:Name="tbToTime" Width="80" Margin="8,0,0,0" Text="23:59" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,0,0,8">
+            <TextBlock Text="Интервал: " VerticalAlignment="Center" Width="70"/>
+            <ComboBox x:Name="cbInterval" Width="200">
+                <ComboBoxItem Tag="00:05:00">5 минут</ComboBoxItem>
+                <ComboBoxItem Tag="00:30:00">30 минут</ComboBoxItem>
+                <ComboBoxItem Tag="01:00:00">1 час</ComboBoxItem>
+                <ComboBoxItem Tag="02:00:00">2 часа</ComboBoxItem>
+                <ComboBoxItem Tag="05:00:00">5 часов</ComboBoxItem>
+                <ComboBoxItem Tag="12:00:00">12 часов</ComboBoxItem>
+                <ComboBoxItem Tag="24:00:00">Сутки</ComboBoxItem>
+            </ComboBox>
+        </StackPanel>
+
+        <TextBlock Grid.Row="3" Text="Формат времени в полях: HH:mm" Margin="0,8,0,0" />
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Width="90" Margin="0,0,8,0" IsDefault="True" Click="BtnOk_Click">Продолжить</Button>
+            <Button Width="90" IsCancel="True">Отмена</Button>
+        </StackPanel>
+    </Grid>
+</Window>

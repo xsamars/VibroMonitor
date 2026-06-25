@@ -21,6 +21,10 @@ public partial class EditPointViewModel : ObservableObject
     [RelayCommand]
     private void Save()
     {
+        if(string.IsNullOrWhiteSpace(Point.MqttTopic))        {
+            MessageBox.Show("Поле MQTT Topic не может быть пустым.", "Внимание!", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
         _context.SaveChangesAsync();
         CloseWindow(true);
     }

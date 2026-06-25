@@ -7,27 +7,31 @@
         xmlns:viewmodels="clr-namespace:VibroMonitor.ViewModels"
         d:DataContext="{d:DesignInstance Type=viewmodels:EditEquipmentViewModel}"
         mc:Ignorable="d"
-        Title="Редактирование оборудования" Height="300" Width="500" WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+        Title="Редактирование оборудования" Height="300" Width="520" WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
     <Grid Margin="16">
+        <Border Padding="12" Background="{StaticResource CardBackground}" BorderBrush="{StaticResource BorderBrushModern}" BorderThickness="1">
+            <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Название -->
-        <TextBlock Grid.Row="0" Text="Название оборудования:" FontWeight="Bold" Margin="0,0,0,8"/>
-        <TextBox Grid.Row="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Height="40" FontSize="14" Margin="0,0,0,16" Padding="8"/>
+        <TextBlock Grid.Row="0" Text="Название оборудования:" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}" Margin="0,0,0,8"/>
+        <TextBox Grid.Row="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Height="40" FontSize="14" Margin="0,0,0,16" />
 
         <!-- Путь к изображению -->
-        <TextBlock Grid.Row="2" Text="Путь к изображению:" FontWeight="Bold" Margin="0,0,0,8"/>
-        <TextBox Grid.Row="3" Text="{Binding ImagePath, UpdateSourceTrigger=PropertyChanged}" Height="40" FontSize="14" Margin="0,0,0,16" Padding="8"/>
+        <TextBlock Grid.Row="2" Text="Путь к изображению:" FontWeight="SemiBold" Foreground="{StaticResource SubtleText}" Margin="0,0,0,8"/>
+        <DockPanel Grid.Row="3" LastChildFill="True" Margin="0,0,0,16">
+            <TextBox Text="{Binding ImagePath, UpdateSourceTrigger=PropertyChanged}" Height="40" Width="320" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+            <Button Content="Выбрать..." Width="110" Margin="8,0,0,0" Command="{Binding ChooseImageCommand}" HorizontalAlignment="Right"  Background="{StaticResource AccentBrush}" />
+        </DockPanel>
 
         <!-- Кнопки -->
-        <Grid Grid.Row="5" Height="40">
+        <Grid Grid.Row="4" Height="40">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -37,12 +41,14 @@
             <Button Grid.Column="1" Content="Сохранить" Width="120" Height="40" Margin="0,0,8,0" 
                     Command="{Binding SaveCommand}" 
                     CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
-                    Background="#4CAF50" Foreground="White" FontSize="14" FontWeight="Bold" Cursor="Hand"/>
+                    Background="{StaticResource SuccessBrush}" Foreground="White" FontSize="14" FontWeight="SemiBold" />
 
             <Button Grid.Column="2" Content="Отмена" Width="120" Height="40"
                     Command="{Binding CancelCommand}"
                     CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
-                    Background="#f44336" Foreground="White" FontSize="14" FontWeight="Bold" Cursor="Hand"/>
+                    Background="{StaticResource DangerBrush}" Foreground="White" FontSize="14" FontWeight="SemiBold" />
         </Grid>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

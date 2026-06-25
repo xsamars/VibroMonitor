@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HighCharts Demo — VibroMonitor</title>
+  <script src="../highstock.js"></script>
+  <style>
+    html,body{height:100%;margin:0;padding:0;font-family:Segoe UI,Arial,sans-serif}
+    #topbar{height:46px;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#f3f3f3;border-bottom:1px solid #ddd}
+    #container{height:calc(100vh + 0px);width:100%}
+    label{font-size:13px}
+    input[type=number]{width:100px;padding:4px}
+    button{padding:6px 10px}
+  </style>
+</head>
+<body>
+  <div id="topbar">
+    <div style="font-weight:bold">HighCharts Demo</div>
+    <div style="margin-left:12px;display:flex;align-items:center;gap:8px">
+      <label>Sensor name:&nbsp;<input id="sensorName" value="Point A" /></label>
+      <label>Hi:&nbsp;<input id="hi" type="number" step="0.1" value="8" /></label>
+      <label>HiHi:&nbsp;<input id="hiHi" type="number" step="0.1" value="12" /></label>
+      <button id="apply">Apply thresholds</button>
+    </div>
+  </div>
+  <div id="container"></div>
+
+  <script>
+    // generate sample timeseries for last 24 hours (one point per 15 minutes)
+    (function(){
+      const now = Date.now();
+      const points = [];
+      const step = 15 * 60 * 1000; // 15 minutes
+      const samples = 24 * 4; // 24 hours
+      let base = now - (samples-1) * step;
+      for (let i=0;i<samples;i++){
+        // sample value: base sine + noise
+        const t = base + i*step;
+        const v = 5 + 3*Math.sin(i/6) + (Math.random()-0.5)*0.6;
+        points.push([t, Math.round(v*100)/100]);
+      }
+
+      let chart = null;
+
+      function buildPlotLines(hi, hiHi){
+        const lines = [];
+        if (hi !== null && hi !== undefined && !isNaN(hi)){
+          lines.push({ value: Number(hi), color: 'yellow', width: 2, zIndex:5, dashStyle: 'ShortDash', label:{ text:'Hi', align:'right', style:{ color:'#000', fontWeight:'bold' } } });
+        }
+        if (hiHi !== null && hiHi !== undefined && !isNaN(hiHi)){
+          lines.push({ value: Number(hiHi), color: 'red', width: 2, zIndex:6, dashStyle: 'ShortDash', label:{ text:'HiHi', align:'right', style:{ color:'#fff', fontWeight:'bold' } } });
+        }
+        return lines;
+      }
+
+      function computeAxisExtents(data, hi, hiHi){
+        if (!data || data.length===0) return { min: null, max: null };
+        const vals = data.map(p=>p[1]);
+        let min = Math.min(...vals);
+        let max = Math.max(...vals);
+        if (!isNaN(hi)) { min = Math.min(min, hi); max = Math.max(max, hi); }
+        if (!isNaN(hiHi)) { min = Math.min(min, hiHi); max = Math.max(max, hiHi); }
+        if (max - min <= 0){ max = max + 1; min = min - 1; }
+        const range = max - min;
+        return { min: min - range*0.1, max: max + range*0.1 };
+      }
+
+      function render(){
+        const sensorName = document.getElementById('sensorName').value || 'Sensor';
+        const hi = parseFloat(document.getElementById('hi').value);
+        const hiHi = parseFloat(document.getElementById('hiHi').value);
+        const ext = computeAxisExtents(points, hi, hiHi);
+
+        if (chart) { chart.destroy(); chart = null; }
+
+        chart = Highcharts.stockChart('container', {
+          rangeSelector: { selected: 1 },
+          title: { text: sensorName },
+          yAxis: { opposite: false, min: ext.min, max: ext.max, plotLines: buildPlotLines(hi, hiHi) },
+          tooltip: { formatter: function(){ return sensorName + ': ' + Highcharts.numberFormat(this.y, 2); } },
+          series: [{ name: sensorName, data: points, tooltip: { valueDecimals: 2 } }]
+        });
+
+        // ensure full reflow
+        setTimeout(()=>{ try{ chart.reflow(); }catch(e){} }, 50);
+      }
+
+      document.getElementById('apply').addEventListener('click', function(){ render(); });
+
+      // initial render
+      render();
+      // make sure it responds to resize
+      window.addEventListener('resize', ()=>{ try{ if (chart) chart.reflow(); }catch(e){} });
+    })();
+  </script>
+</body>
+</html>

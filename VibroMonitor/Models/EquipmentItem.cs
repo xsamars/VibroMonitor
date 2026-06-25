@@ -18,6 +18,12 @@ public partial class EquipmentItem : ObservableObject
     // EF navigation
     public ObservableCollection<EquipmentPoint> Points { get; set; } = new();
 
+    // images navigation
+    public ObservableCollection<EquipmentImage> Images { get; set; } = new();
+
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public byte[]? ImageData => Images?.FirstOrDefault()?.Data;
+
     // Placeholder for alarms
     public ObservableCollection<AlarmItem> Alarms { get; set; } = new();
 

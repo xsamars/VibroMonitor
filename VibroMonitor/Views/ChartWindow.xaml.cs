@@ -45,18 +45,46 @@ namespace VibroMonitor.Views
 
                     var labelerProp = axisType.GetProperty("Labeler");
                     var unitProp = axisType.GetProperty("Unit");
+                    var crossSnapProp = axisType.GetProperty("CrosshairSnapEnabled");
+                    var crossLabelsBgProp = axisType.GetProperty("CrosshairLabelsBackground");
+                    var crossLabelsPaintProp = axisType.GetProperty("CrosshairLabelsPaint");
+                    var crossPaintProp = axisType.GetProperty("CrosshairPaint");
+
                     if (labelerProp != null)
                         labelerProp.SetValue(axis, vm.XLabeler);
                     if (unitProp != null)
                         unitProp.SetValue(axis, 1);
 
-                    var axesArray = Array.CreateInstance(axisType, 1);
-                    axesArray.SetValue(axis, 0);
+                    // If the view model updates XLabeler later, update the axis Labeler as well
+                    if (labelerProp != null)
+                    {
+                        vm.PropertyChanged += (s, ev) =>
+                        {
+                            try
+                            {
+                                if (ev.PropertyName == nameof(vm.XLabeler))
+                                {
+                                    // update labeler on UI thread
+                                    Application.Current.Dispatcher.Invoke(() =>
+                                    {
+                                        try { labelerProp.SetValue(axis, vm.XLabeler); } catch { }
+                                    });
+                                }
+                            }
+                            catch { }
+                        };
+                    }
+                    // enable crosshair snapping and set visuals if available on this Axis type
+                    if (crossSnapProp != null)
+                        crossSnapProp.SetValue(axis, true);
+                    if (crossLabelsBgProp != null)
+                        crossLabelsBgProp.SetValue(axis, "#FF8C00");
+                    if (crossLabelsPaintProp != null)
+                        crossLabelsPaintProp.SetValue(axis, "#8B0000");
+                    if (crossPaintProp != null)
+                        crossPaintProp.SetValue(axis, "#FF8C00");
 
-                    var chartType = Chart.GetType();
-                    var xAxesProp = chartType.GetProperty("XAxes");
-                    if (xAxesProp != null)
-                        xAxesProp.SetValue(Chart, axesArray);
+                    // previously axes were created dynamically; XAML binding handles it now
                 }
                 catch (Exception ex)
                 {

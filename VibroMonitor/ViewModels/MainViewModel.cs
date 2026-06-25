@@ -19,6 +19,7 @@ namespace VibroMonitor.ViewModels
     {
         private readonly AppDbContext _db;
         private readonly MqttService _mqttService;
+        private readonly AdminService _adminService;
 
         [ObservableProperty]
         private ObservableCollection<EquipmentItem> equipmentItems = new();
@@ -26,12 +27,18 @@ namespace VibroMonitor.ViewModels
         [ObservableProperty]
         private ObservableCollection<AlarmItem> alarmItems = new();
 
-        public MainViewModel(AppDbContext db, MqttService mqttService)
+        public MainViewModel(AppDbContext db, MqttService mqttService, AdminService adminService)
         {
             _db = db;
             _mqttService = mqttService;
+            _adminService = adminService;
             _mqttService.MessageReceived += OnMessageReceived;
+            // show settings button when admin authenticated
+            _adminService.AuthChanged += (ok) => OnPropertyChanged(nameof(IsAdminAuthenticated));
         }
+
+        // Expose admin authentication state to the view for bindings
+        public bool IsAdminAuthenticated => _adminService?.IsAuthenticated ?? false;
 
         // timer to refresh alarms periodically
         private System.Windows.Threading.DispatcherTimer? _alarmsTimer;
@@ -81,7 +88,7 @@ namespace VibroMonitor.ViewModels
         public async Task InitializeAsync()
         {
             // load equipment and their points from DB
-            var items = await _db.EquipmentItems.Include(x => x.Points).ToListAsync();
+            var items = await _db.EquipmentItems.Include(x => x.Points).Include(x => x.Images).ToListAsync();
             EquipmentItems.Clear();
             foreach (var it in items)
                 EquipmentItems.Add(it);
@@ -125,10 +132,32 @@ namespace VibroMonitor.ViewModels
 
         }
 
+        // OpenSettings is implemented below (kept single implementation)
         [RelayCommand]
         private void OpenSettings()
         {
-            MessageBox.Show("Настройки");
+            // require admin
+            if (!_adminService.IsAuthenticated)
+            {
+                var pw = App.Services?.GetService(typeof(PasswordPromptWindow)) as Views.PasswordPromptWindow;
+                if (pw == null) return;
+                pw.Owner = Application.Current.MainWindow;
+                var res = pw.ShowDialog();
+                if (res != true) return;
+                if (!_adminService.CheckPassword(pw.Password ?? string.Empty))
+                {
+                    MessageBox.Show("Неверный пароль", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+            }
+            else
+            {
+                var pwchange = App.Services?.GetService(typeof(ChangePasswordWindow)) as Views.ChangePasswordWindow;
+                pwchange.Owner = Application.Current.MainWindow;
+                if (pwchange.ShowDialog() ?? true)
+                    _db.SaveChangesAsync();
+
+            }
         }
 
         [RelayCommand]
@@ -171,7 +200,8 @@ namespace VibroMonitor.ViewModels
             if (equipment == null)
                 return;
 
-            var vm = new EquipmentDetailsViewModel(equipment, _mqttService, _db);
+            var admin = App.Services?.GetService(typeof(AdminService)) as AdminService;
+            var vm = new EquipmentDetailsViewModel(equipment, _mqttService, _db, admin!);
 
             var window = new EquipmentDetailsWindow()
             {
@@ -186,11 +216,10 @@ namespace VibroMonitor.ViewModels
         {
             var newItem = new EquipmentItem() { Name = "", ImagePath = "" };
 
-            var vm = new EditEquipmentViewModel();
-            vm.Initialize(newItem, async () =>
+            var vm = new EditEquipmentViewModel(_db);
+            vm.Initialize(newItem, () =>
             {
-                _db.EquipmentItems.Add(newItem);
-                await _db.SaveChangesAsync();
+                // VM saved the entity to DB; just add to UI collection
                 EquipmentItems.Add(newItem);
             });
 
@@ -214,11 +243,10 @@ namespace VibroMonitor.ViewModels
         [RelayCommand]
         private async Task EditEquipment(EquipmentItem item)
         {
-            var vm = new EditEquipmentViewModel();
-            vm.Initialize(item, async () =>
+            var vm = new EditEquipmentViewModel(_db);
+            vm.Initialize(item, () =>
             {
-                _db.EquipmentItems.Update(item);
-                await _db.SaveChangesAsync();
+                // persistence handled in VM
             });
 
             var window = new EditEquipmentWindow()
@@ -227,6 +255,10 @@ namespace VibroMonitor.ViewModels
             };
 
             window.ShowDialog();
+            var items = await _db.EquipmentItems.Include(x => x.Points).Include(x => x.Images).ToListAsync();
+            EquipmentItems.Clear();
+            foreach (var it in items)
+                EquipmentItems.Add(it);
         }
 
         [RelayCommand]

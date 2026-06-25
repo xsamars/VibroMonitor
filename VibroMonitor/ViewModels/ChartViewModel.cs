@@ -3,9 +3,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using VibroMonitor.Data;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
+using SkiaSharp;
 using LiveChartsCore.Defaults;
 using System.Linq;
 using System;
+using System.Collections.Generic;
 
 namespace VibroMonitor.ViewModels;
 
@@ -69,7 +72,48 @@ public partial class PointChartViewModel : ObservableObject
 
             var values = history.Select(h => new ObservablePoint(h.Time.ToOADate(), h.Value)).ToArray();
 
-            Series = new ISeries[] { new LineSeries<ObservablePoint> { Values = values, Name = Point.Name } };
+            // main series for point values
+            var mainSeries = new LineSeries<ObservablePoint> { Values = values, Name = Point.Name, GeometrySize = 0 };
+
+            // create horizontal threshold lines (use two points at the start and end of the time range)
+            ISeries? hiSeries = null;
+            ISeries? hiHiSeries = null;
+
+            if (values.Length > 0)
+            {
+                var startX = values.First().X;
+                var endX = values.Last().X;
+
+                var hiValues = new ObservablePoint[] { new ObservablePoint(startX, Point.Hi), new ObservablePoint(endX, Point.Hi) };
+                var hiHiValues = new ObservablePoint[] { new ObservablePoint(startX, Point.HiHi), new ObservablePoint(endX, Point.HiHi) };
+
+                hiSeries = new LineSeries<ObservablePoint>
+                {
+                    Values = hiValues,
+                    Name = "Hi",
+                    GeometrySize = 0,
+                    Stroke = new SolidColorPaint(SKColors.Yellow, 2),
+                    Fill = null
+                };
+
+                hiHiSeries = new LineSeries<ObservablePoint>
+                {
+                    Values = hiHiValues,
+                    Name = "HiHi",
+                    GeometrySize = 0,
+                    Stroke = new SolidColorPaint(SKColors.Red, 2),
+                    Fill = null
+                };
+
+                // zero lines removed per user request
+            }
+
+            var seriesList = new List<ISeries> { mainSeries };
+            if (hiSeries != null) seriesList.Add(hiSeries);
+            if (hiHiSeries != null) seriesList.Add(hiHiSeries);
+            // no zero reference lines
+
+            Series = seriesList.ToArray();
             OnPropertyChanged(nameof(Series));
             // also update labeler to show only date for wide ranges
             XLabeler = val => DateTime.FromOADate(val).ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss");
