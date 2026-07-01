@@ -256,18 +256,6 @@ public partial class EquipmentDetailsViewModel : ObservableObject, IDisposable
         }
     }
 
-    [RelayCommand]
-    private void OpenChart(EquipmentPoint point)
-    {
-        var vm = new PointChartViewModel(point, _db);
-
-        var window = new ChartWindow()
-        {
-            DataContext = vm
-        };
-
-        window.Show();
-    }
 
     [RelayCommand]
     private async Task ExportHistory()

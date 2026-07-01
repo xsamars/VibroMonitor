@@ -10,8 +10,6 @@ using VibroMonitor.Views;
 using VibroMonitor.ViewModels;
 using VibroMonitor.Data;
 using Microsoft.EntityFrameworkCore;
-using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
 
 namespace VibroMonitor
 {
@@ -23,7 +21,6 @@ namespace VibroMonitor
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            LiveCharts.Configure(config => config.AddSkiaSharp());
             
             // Configure Serilog
             Log.Logger = new LoggerConfiguration()

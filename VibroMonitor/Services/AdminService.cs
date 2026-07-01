@@ -1,5 +1,3 @@
-using LiveChartsCore.SkiaSharpView.WPF;
-using System;
 using System.Windows;
 using VibroMonitor.Data;
 using VibroMonitor.Views;
