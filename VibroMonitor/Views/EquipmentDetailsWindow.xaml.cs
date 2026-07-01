@@ -21,6 +21,15 @@ namespace VibroMonitor.Views
         public EquipmentDetailsWindow()
         {
             InitializeComponent();
+            this.Closing += EquipmentDetailsWindow_Closing;
+        }
+
+        private void EquipmentDetailsWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (DataContext is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
 
         private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

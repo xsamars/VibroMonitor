@@ -12,14 +12,16 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Win32;
 using System.IO;
+using System.Threading;
 
 namespace VibroMonitor.ViewModels;
 
-public partial class EquipmentDetailsViewModel : ObservableObject
+public partial class EquipmentDetailsViewModel : ObservableObject, IDisposable
 {
     private readonly MqttService _mqttService;
     private readonly AppDbContext _db;
     private readonly VibroMonitor.Services.AdminService _adminService;
+    private CancellationTokenSource? _refreshCancellation;
 
     public EquipmentItem Equipment { get; }
 
@@ -47,41 +49,73 @@ public partial class EquipmentDetailsViewModel : ObservableObject
 
     private async Task InitializeAsync()
     {
-        var eq = await _db.EquipmentItems.Include(x => x.Points).Include(x => x.Images).FirstOrDefaultAsync(x => x.Id == Equipment.Id);
-        if (eq != null)
-        {
-            Equipment.Points = eq.Points;
-            Equipment.Images = eq.Images;
-        }
-
         await SubscribePointsAsync();
-
-        // load alarms for this equipment
-        await LoadAlarmsAsync();
+        StartAlarmRefreshLoop();
     }
 
-    // Load alarms associated with this equipment
-    private async Task LoadAlarmsAsync()
+    private void StartAlarmRefreshLoop()
+    {
+        _refreshCancellation = new CancellationTokenSource();
+        _ = RefreshAlarmsLoop(_refreshCancellation.Token);
+    }
+
+    private async Task RefreshAlarmsLoop(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(1000, cancellationToken);
+
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+
+                await RefreshAlarmsFromDatabase();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal cancellation, no action needed
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in alarm refresh loop: {ex.Message}");
+        }
+    }
+
+    private async Task RefreshAlarmsFromDatabase()
     {
         try
         {
             var alarms = await _db.AlarmItem
-                .Include(a => a.EquipmentPoint)
-                .Where(a => a.EquipmentPoint != null && a.EquipmentPoint.EquipmentItemId == Equipment.Id)
+                .Where(a => a.EquipmentPointId.HasValue && 
+                            Equipment.Points.Select(p => p.Id).Contains(a.EquipmentPointId.Value))
                 .OrderByDescending(a => a.Created)
+                .Take(100)
                 .ToListAsync();
 
             Application.Current.Dispatcher.Invoke(() =>
             {
                 Equipment.Alarms.Clear();
-                foreach (var a in alarms)
-                    Equipment.Alarms.Add(a);
+                foreach (var alarm in alarms)
+                {
+                    Equipment.Alarms.Add(alarm);
+                }
             });
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Не удалось загрузить предупреждения: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            Console.WriteLine($"Error refreshing alarms: {ex.Message}");
         }
+    }
+
+    public void Dispose()
+    {
+        _refreshCancellation?.Cancel();
+        _refreshCancellation?.Dispose();
+        _mqttService.MessageReceived -= OnMessageReceived;
+        _adminService.AuthChanged -= (ok) => OnPropertyChanged(nameof(IsAdminAuthenticated));
+        GC.SuppressFinalize(this);
     }
 
     private async Task SubscribePointsAsync()
@@ -122,9 +156,6 @@ public partial class EquipmentDetailsViewModel : ObservableObject
             item.Acked = true;
             item.AckedTime = DateTime.UtcNow;
             await _db.SaveChangesAsync();
-
-            // refresh alarms list
-            await LoadAlarmsAsync();
         }
         catch (Exception ex)
         {

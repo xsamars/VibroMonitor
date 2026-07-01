@@ -175,6 +175,7 @@ namespace VibroMonitor.ViewModels
             {
                 var alarms = await _db.AlarmItem
                     .OrderByDescending(a => a.Created)
+                    .Take(100)
                     .ToListAsync();
 
                 Application.Current.Dispatcher.Invoke(() =>
@@ -196,7 +197,7 @@ namespace VibroMonitor.ViewModels
             await _mqttService.Connect();
 
             // ensure points are loaded
-            var equipment = await _db.EquipmentItems.Include(x => x.Points).FirstOrDefaultAsync(x => x.Id == item.Id);
+            var equipment = await _db.EquipmentItems.Include(x => x.Points).Include(x => x.Alarms).FirstOrDefaultAsync(x => x.Id == item.Id);
             if (equipment == null)
                 return;
 
