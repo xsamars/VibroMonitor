@@ -21,7 +21,7 @@ namespace VibroMonitor.Views
         public EquipmentDetailsWindow()
         {
             InitializeComponent();
-            this.Closing += EquipmentDetailsWindow_Closing;
+            Closing += EquipmentDetailsWindow_Closing;
         }
 
         private void EquipmentDetailsWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
